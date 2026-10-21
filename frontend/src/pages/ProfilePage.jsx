@@ -7,9 +7,9 @@ import { useProfile, publishProfile, clearProfile } from '../services/profile'
 
 const GENRES = ['Fiction', 'Non-fiction', 'Fantasy', 'Sci-Fi', 'Mystery', 'Romance', 'Biography', 'History', 'Self-help', 'Poetry', 'Business', 'Science']
 const THEMES = [
-  { value: 'LIGHT', label: 'Light', icon: '☀️' },
-  { value: 'DARK', label: 'Dark', icon: '🌙' },
-  { value: 'SYSTEM', label: 'System', icon: '💻' },
+  { value: 'LIGHT', label: 'Light' },
+  { value: 'DARK', label: 'Dark' },
+  { value: 'SYSTEM', label: 'System' },
 ]
 
 function Toggle({ label, hint, checked, onChange }) {
