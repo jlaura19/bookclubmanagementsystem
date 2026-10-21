@@ -2,6 +2,8 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import { Client } from '@stomp/stompjs'
 import api from '../services/api'
 import AppHeader from '../components/AppHeader'
+import Avatar from '../components/Avatar'
+import { useProfile } from '../services/profile'
 
 const REACTIONS = ['👍', '❤️', '😂', '😮', '😢', '🔥', '👏', '📚']
 const HOLD_MS = 450
@@ -15,6 +17,7 @@ function formatTime(value) {
 }
 
 export default function ChatPage() {
+  const profile = useProfile()
   const currentUsername = localStorage.getItem('USIU_BOOKCLUB_USERNAME') || localStorage.getItem('USIU_BOOKCLUB_STUDENT_ID')
   const [pickerFor, setPickerFor] = useState(null)
   const holdTimerRef = useRef(null)
@@ -243,9 +246,18 @@ export default function ChatPage() {
               const isMine = author === currentUsername
               return (
                 <article key={item.id} className={`chat-row ${isMine ? 'mine' : ''}`}>
-                  {!isMine && <span className="chat-avatar">{author.charAt(0).toUpperCase()}</span>}
+                  {!isMine && (
+                    <Avatar
+                      className="chat-avatar"
+                      username={author}
+                      displayName={item.displayName}
+                      avatarUrl={item.avatarUrl}
+                      hideImage={profile?.showAvatars === false}
+                      size={32}
+                    />
+                  )}
                   <div className="chat-bubble-wrap">
-                    {!isMine && <span className="chat-author">{author}</span>}
+                    {!isMine && <span className="chat-author">{item.displayName || author}</span>}
                     <div
                       className="chat-bubble"
                       onPointerDown={() => startHold(item.id)}

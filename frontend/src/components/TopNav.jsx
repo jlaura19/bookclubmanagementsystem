@@ -1,6 +1,9 @@
 import { useEffect, useRef, useState } from 'react'
 import { Link, NavLink, useNavigate } from 'react-router-dom'
 import api from '../services/api'
+import Avatar from './Avatar'
+import { useProfile, publishProfile } from '../services/profile'
+import { applyTheme } from '../services/theme'
 
 const links = [
   { to: '/catalog', label: 'Discover' },
@@ -24,14 +27,25 @@ function timeAgo(value) {
 
 export default function TopNav() {
   const navigate = useNavigate()
+  const profile = useProfile()
   const [term, setTerm] = useState('')
-  const [menuOpen, setMenuOpen] = useState(false)
   const [mobileOpen, setMobileOpen] = useState(false)
   const [bellOpen, setBellOpen] = useState(false)
   const [notifications, setNotifications] = useState([])
   const [lastSeen, setLastSeen] = useState(() => localStorage.getItem(SEEN_KEY) || '')
-  const menuRef = useRef(null)
   const bellRef = useRef(null)
+  const dark = document.documentElement.getAttribute('data-theme') === 'dark'
+
+  const toggleTheme = async () => {
+    const next = dark ? 'LIGHT' : 'DARK'
+    applyTheme(next)
+    try {
+      const response = await api.put('/profile', { themePreference: next })
+      publishProfile(response.data)
+    } catch {
+      // theme still applies locally
+    }
+  }
   const username = localStorage.getItem('USIU_BOOKCLUB_USERNAME') || localStorage.getItem('USIU_BOOKCLUB_STUDENT_ID') || 'Reader'
 
   const isUnread = (item) => !lastSeen || item.createdAt > lastSeen
@@ -74,9 +88,6 @@ export default function TopNav() {
 
   useEffect(() => {
     const close = (event) => {
-      if (menuRef.current && !menuRef.current.contains(event.target)) {
-        setMenuOpen(false)
-      }
       if (bellRef.current && !bellRef.current.contains(event.target)) {
         setBellOpen(false)
       }
@@ -89,18 +100,6 @@ export default function TopNav() {
     event.preventDefault()
     const trimmed = term.trim()
     navigate(trimmed ? `/catalog?q=${encodeURIComponent(trimmed)}` : '/catalog')
-  }
-
-  const handleLogout = async () => {
-    try {
-      await api.post('/auth/logout')
-    } catch {
-      // session is cleared locally either way
-    }
-    localStorage.removeItem('USIU_BOOKCLUB_USERNAME')
-    localStorage.removeItem('USIU_BOOKCLUB_STUDENT_ID')
-    window.dispatchEvent(new Event('bookclub:logout'))
-    navigate('/', { replace: true })
   }
 
   return (
@@ -172,17 +171,19 @@ export default function TopNav() {
             </div>
           )}
         </div>
-        <div className="avatar-wrap" ref={menuRef}>
-          <button type="button" className="avatar-chip" onClick={() => setMenuOpen((open) => !open)}>
-            <span className="avatar">{username.charAt(0).toUpperCase()}</span>
-            <span className="avatar-name">{username}</span>
-          </button>
-          {menuOpen && (
-            <div className="avatar-menu">
-              <button type="button" onClick={handleLogout}>Log out</button>
-            </div>
-          )}
-        </div>
+        <button
+          type="button"
+          className="icon-button"
+          aria-label={dark ? 'Switch to light mode' : 'Switch to dark mode'}
+          title={dark ? 'Light mode' : 'Dark mode'}
+          onClick={toggleTheme}
+        >
+          {dark ? '☀️' : '🌙'}
+        </button>
+        <button type="button" className="avatar-chip" title="Open profile" onClick={() => navigate('/profile')}>
+          <Avatar username={username} displayName={profile?.displayName} avatarUrl={profile?.avatarUrl} size={28} />
+          <span className="avatar-name">{profile?.displayName || username}</span>
+        </button>
       </div>
     </nav>
   )

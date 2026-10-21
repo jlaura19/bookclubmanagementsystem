@@ -22,9 +22,9 @@ body {
   color: var(--ink);
   font-family: 'Sora', 'Segoe UI', sans-serif;
   background:
-    radial-gradient(circle at 12% 4%, #dff8f2 0%, transparent 30%),
-    radial-gradient(circle at 88% 12%, #e1f0ff 0%, transparent 28%),
-    linear-gradient(180deg, #f7fafc 0%, #eef3f7 100%);
+    radial-gradient(circle at 12% 4%, var(--surface-soft) 0%, transparent 30%),
+    radial-gradient(circle at 88% 12%, var(--surface-soft) 0%, transparent 28%),
+    linear-gradient(180deg, var(--surface-soft) 0%, var(--surface-soft) 100%);
   min-height: 100vh;
 }
 
@@ -85,7 +85,7 @@ a {
 .auth-mode-toggle {
   display: flex;
   border-bottom: 1px solid var(--line);
-  background: #f8fafc;
+  background: var(--surface-soft);
 }
 
 .mode-button {
@@ -131,7 +131,7 @@ a {
   border: 1px solid var(--line);
   border-radius: 14px;
   padding: 12px 14px;
-  background: #fbfdff;
+  background: var(--surface-soft);
   color: var(--ink);
 }
 
@@ -191,7 +191,7 @@ a {
 .link-button {
   color: var(--primary-strong);
   border: 1px solid var(--primary);
-  background: #f3fffd;
+  background: var(--surface-soft);
 }
 
 .danger-button {
@@ -244,7 +244,7 @@ button:disabled {
   border: 1px dashed #94a3b8;
   border-radius: 16px;
   padding: 18px;
-  background: #f8fafc;
+  background: var(--surface-soft);
 }
 
 .book-grid {
@@ -264,7 +264,7 @@ button:disabled {
 .cover-frame {
   aspect-ratio: 3 / 4;
   max-height: 170px;
-  background: linear-gradient(120deg, #e7eef5 0%, #dff2ee 100%);
+  background: linear-gradient(120deg, var(--surface-soft) 0%, var(--surface-soft) 100%);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -354,7 +354,7 @@ button:disabled {
   border: 1px solid var(--line);
   border-radius: 16px;
   padding: 14px;
-  background: #f8fffd;
+  background: var(--surface-soft);
   display: grid;
   gap: 8px;
 }
@@ -378,7 +378,7 @@ button:disabled {
 .chat-message {
   border: 1px solid var(--line);
   border-radius: 14px;
-  background: #fbfdff;
+  background: var(--surface-soft);
   padding: 12px;
 }
 
@@ -410,7 +410,7 @@ button:disabled {
   gap: 8px;
   border: 1px solid var(--line);
   border-radius: 14px;
-  background: #f7fbfe;
+  background: var(--surface-soft);
   padding: 12px;
 }
 
@@ -420,7 +420,7 @@ button:disabled {
   overflow: auto;
   border: 1px solid var(--line);
   border-radius: 16px;
-  background: #f8fcff;
+  background: var(--surface-soft);
   padding: 12px;
   display: grid;
   gap: 10px;
@@ -445,7 +445,7 @@ button:disabled {
 }
 
 .chat-feed {
-  background: linear-gradient(180deg, #f1fbf9 0%, #f8fcff 100%);
+  background: linear-gradient(180deg, var(--surface-soft) 0%, var(--surface-soft) 100%);
   scroll-behavior: smooth;
 }
 
@@ -494,7 +494,7 @@ button:disabled {
   position: relative;
   padding: 9px 13px 6px;
   border-radius: 18px 18px 18px 4px;
-  background: #fff;
+  background: var(--surface-alt);
   border: 1px solid var(--line);
   box-shadow: 0 2px 6px rgba(21, 34, 56, 0.06);
   cursor: pointer;
@@ -534,7 +534,7 @@ button:disabled {
   gap: 2px;
   padding: 6px 8px;
   border-radius: 999px;
-  background: #fff;
+  background: var(--surface-alt);
   border: 1px solid var(--line);
   box-shadow: var(--shadow-soft);
   animation: pop-in 0.15s ease-out;
@@ -568,7 +568,7 @@ button:disabled {
 
 .reaction-chips .chip {
   border: 1px solid var(--line);
-  background: #fff;
+  background: var(--surface-alt);
   border-radius: 999px;
   padding: 1px 8px;
   font-size: 0.82rem;
@@ -628,7 +628,7 @@ button:disabled {
   border: 1px solid var(--line);
   border-radius: 10px;
   overflow: hidden;
-  background: #eef3f6;
+  background: var(--surface-soft);
   aspect-ratio: 2 / 3;
   cursor: pointer;
   display: grid;
@@ -665,7 +665,7 @@ button:disabled {
   gap: 14px;
   padding: 20px;
   border-radius: 16px;
-  background: #fff;
+  background: var(--surface-alt);
 }
 
 .modal-body {

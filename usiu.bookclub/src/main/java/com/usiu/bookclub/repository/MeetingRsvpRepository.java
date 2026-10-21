@@ -15,4 +15,6 @@ public interface MeetingRsvpRepository extends JpaRepository<MeetingRsvp, Long> 
     Optional<MeetingRsvp> findByMeetingIdAndUserUsername(Long meetingId, String username);
 
     void deleteByMeetingId(Long meetingId);
+
+    List<MeetingRsvp> findByUserUsername(String username);
 }

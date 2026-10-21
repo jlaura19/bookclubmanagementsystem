@@ -9,4 +9,6 @@ import com.usiu.bookclub.entity.Review;
 public interface ReviewRepository extends JpaRepository<Review, Long> {
 
     List<Review> findByBookIdOrderByCreatedAtDesc(Long bookId);
+
+    List<Review> findByUserUsernameOrBookUserUsername(String reviewer, String bookOwner);
 }

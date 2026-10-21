@@ -14,6 +14,8 @@ public interface ChatReactionRepository extends JpaRepository<ChatReaction, Long
 
     List<ChatReaction> findByMessageId(Long messageId);
 
+    List<ChatReaction> findByUserUsername(String username);
+
     Optional<ChatReaction> findByMessageIdAndUserUsernameAndEmoji(Long messageId, String username, String emoji);
 
     List<ChatReaction> findTop20ByMessageUserUsernameAndUserUsernameNotAndCreatedAtAfterOrderByCreatedAtDesc(

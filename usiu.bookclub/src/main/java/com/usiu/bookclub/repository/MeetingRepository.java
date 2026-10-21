@@ -12,4 +12,6 @@ public interface MeetingRepository extends JpaRepository<Meeting, Long> {
     List<Meeting> findByStartsAtAfterOrderByStartsAtAsc(LocalDateTime after);
 
     List<Meeting> findTop20ByCreatedAtAfterOrderByCreatedAtDesc(LocalDateTime after);
+
+    List<Meeting> findByOrganizerUsername(String username);
 }

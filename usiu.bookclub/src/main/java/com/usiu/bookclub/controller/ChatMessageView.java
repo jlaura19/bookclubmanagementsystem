@@ -6,7 +6,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.usiu.bookclub.entity.ChatMessage;
 
 public record ChatMessageView(Long id, String username, String message, String createdAt, Long bookId, Integer upvotes,
-        List<ReactionView> reactions) {
+        List<ReactionView> reactions, String displayName, String avatarUrl) {
 
     public record ReactionView(String emoji, List<String> users) {
     }
@@ -28,6 +28,8 @@ public record ChatMessageView(Long id, String username, String message, String c
                 chatMessage.getCreatedAt() == null ? null : chatMessage.getCreatedAt().toString(),
                 chatMessage.getBook() == null ? null : chatMessage.getBook().getId(),
                 chatMessage.getUpvotes(),
-                reactions);
+                reactions,
+                chatMessage.getUser().getDisplayName(),
+                chatMessage.getUser().getAvatarUrl());
     }
 }

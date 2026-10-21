@@ -3,6 +3,8 @@ import { Link } from 'react-router-dom'
 import api from '../services/api'
 import { resolveMediaUrl } from '../services/media'
 import TopNav from '../components/TopNav'
+import Avatar from '../components/Avatar'
+import { useProfile } from '../services/profile'
 
 const PROGRESS_KEY = 'bookclub.progress'
 const VOTES_KEY = 'bookclub.votes'
@@ -53,6 +55,7 @@ function Cover({ book, className = '' }) {
 }
 
 export default function DashboardPage() {
+  const profile = useProfile()
   const [myBooks, setMyBooks] = useState([])
   const [allBooks, setAllBooks] = useState([])
   const [messages, setMessages] = useState([])
@@ -316,9 +319,14 @@ export default function DashboardPage() {
             {messages.length === 0 && !loading && <p className="muted-text">No messages yet — be the first to share.</p>}
             {messages.map((m) => (
               <article key={m.id} className="thread-item">
-                <span className="avatar">{(m.username || '?').charAt(0).toUpperCase()}</span>
+                <Avatar
+                  username={m.username}
+                  displayName={m.displayName}
+                  avatarUrl={m.avatarUrl}
+                  hideImage={profile?.showAvatars === false}
+                />
                 <div>
-                  <strong>{m.username}</strong>
+                  <strong>{m.displayName || m.username}</strong>
                   <p>{m.message}</p>
                 </div>
                 <span className="badge" title="Reactions">💬 {reactionTotal(m)}</span>

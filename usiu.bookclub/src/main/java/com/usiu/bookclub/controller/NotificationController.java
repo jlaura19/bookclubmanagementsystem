@@ -12,7 +12,9 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.usiu.bookclub.entity.User;
 import com.usiu.bookclub.repository.ChatMessageRepository;
+import com.usiu.bookclub.repository.UserRepository;
 import com.usiu.bookclub.repository.ChatReactionRepository;
 import com.usiu.bookclub.repository.MeetingRepository;
 
@@ -31,9 +33,11 @@ public class NotificationController {
     private final MeetingRepository meetingRepository;
     private final ChatMessageRepository chatMessageRepository;
     private final ChatReactionRepository reactionRepository;
+    private final UserRepository userRepository;
 
     public NotificationController(MeetingRepository meetingRepository, ChatMessageRepository chatMessageRepository,
-            ChatReactionRepository reactionRepository) {
+            ChatReactionRepository reactionRepository, UserRepository userRepository) {
+        this.userRepository = userRepository;
         this.meetingRepository = meetingRepository;
         this.chatMessageRepository = chatMessageRepository;
         this.reactionRepository = reactionRepository;
@@ -49,23 +53,33 @@ public class NotificationController {
 
         LocalDateTime since = LocalDateTime.now().minusDays(7);
         List<NotificationView> items = new ArrayList<>();
+        User me = userRepository.findById(username).orElse(null);
+        if (me == null) {
+            return ResponseEntity.status(401).build();
+        }
 
+        if (me.getNotifyMeetings()) {
         meetingRepository.findTop20ByCreatedAtAfterOrderByCreatedAtDesc(since).stream()
                 .filter(meeting -> !meeting.getOrganizer().getUsername().equals(username))
                 .forEach(meeting -> items.add(new NotificationView("meeting-" + meeting.getId(), "meeting",
                         meeting.getOrganizer().getUsername() + " scheduled “" + meeting.getTitle() + "”",
                         meeting.getCreatedAt().toString(), "/dashboard#schedule")));
+        }
 
+        if (me.getNotifyMessages()) {
         chatMessageRepository.findTop20ByUserUsernameNotAndCreatedAtAfterOrderByCreatedAtDesc(username, since)
                 .forEach(message -> items.add(new NotificationView("message-" + message.getId(), "message",
                         message.getUser().getUsername() + ": " + abbreviate(message.getMessage()),
                         message.getCreatedAt().toString(), "/chat")));
+        }
 
+        if (me.getNotifyReactions()) {
         reactionRepository
                 .findTop20ByMessageUserUsernameAndUserUsernameNotAndCreatedAtAfterOrderByCreatedAtDesc(username, username, since)
                 .forEach(reaction -> items.add(new NotificationView("reaction-" + reaction.getId(), "reaction",
                         reaction.getUser().getUsername() + " reacted " + reaction.getEmoji() + " to your message",
                         reaction.getCreatedAt().toString(), "/chat")));
+        }
 
         items.sort(Comparator.comparing(NotificationView::createdAt).reversed());
         return ResponseEntity.ok(items.stream().limit(30).toList());
