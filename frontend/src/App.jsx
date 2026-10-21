@@ -6,6 +6,7 @@ import CatalogPage from './pages/CatalogPage'
 import BookFormPage from './pages/BookFormPage'
 import CommunityPage from './pages/CommunityPage'
 import ChatPage from './pages/ChatPage'
+import BookshelfPage from './pages/BookshelfPage'
 import api from './services/api'
 
 export default function App() {
@@ -68,6 +69,10 @@ export default function App() {
       <Route
         path="/dashboard"
         element={isAuthenticated ? <DashboardPage /> : <Navigate to="/" replace />}
+      />
+      <Route
+        path="/bookshelf"
+        element={isAuthenticated ? <BookshelfPage /> : <Navigate to="/" replace />}
       />
       <Route
         path="/catalog"

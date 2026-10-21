@@ -19,8 +19,6 @@ public class WebConfig implements WebMvcConfigurer {
         Path uploadPath = Paths.get(uploadDir).toAbsolutePath().normalize();
         Path uploadParentPath = uploadPath.getParent() == null ? uploadPath : uploadPath.getParent();
 
-        // Resource handler locations should be explicit directories (trailing slash)
-        // so both legacy and current URL styles resolve consistently.
         String resourceLocation = asDirectoryResourceLocation(uploadPath);
         String legacyResourceLocation = asDirectoryResourceLocation(uploadParentPath);
 

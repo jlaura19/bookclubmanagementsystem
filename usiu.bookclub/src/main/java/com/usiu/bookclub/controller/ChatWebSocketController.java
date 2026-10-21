@@ -14,6 +14,7 @@ import com.usiu.bookclub.entity.User;
 import com.usiu.bookclub.repository.BookRepository;
 import com.usiu.bookclub.repository.ChatMessageRepository;
 import com.usiu.bookclub.repository.UserRepository;
+import com.usiu.bookclub.service.ChatReactionService;
 
 @Controller
 public class ChatWebSocketController {
@@ -24,13 +25,16 @@ public class ChatWebSocketController {
     private final BookRepository bookRepository;
     private final UserRepository userRepository;
     private final SimpMessagingTemplate messagingTemplate;
+    private final ChatReactionService chatReactionService;
 
     public ChatWebSocketController(ChatMessageRepository chatMessageRepository, BookRepository bookRepository,
-            UserRepository userRepository, SimpMessagingTemplate messagingTemplate) {
+            UserRepository userRepository, SimpMessagingTemplate messagingTemplate,
+            ChatReactionService chatReactionService) {
         this.chatMessageRepository = chatMessageRepository;
         this.bookRepository = bookRepository;
         this.userRepository = userRepository;
         this.messagingTemplate = messagingTemplate;
+        this.chatReactionService = chatReactionService;
     }
 
     @MessageMapping("/chat.send")
@@ -70,28 +74,23 @@ public class ChatWebSocketController {
         messagingTemplate.convertAndSend(resolveThreadTopic(view.bookId()), view);
     }
 
-    @MessageMapping("/chat.upvote")
-    public void upvoteMessage(Map<String, Long> payload, SimpMessageHeaderAccessor headerAccessor) {
+    @MessageMapping("/chat.react")
+    public void reactToMessage(Map<String, Object> payload, SimpMessageHeaderAccessor headerAccessor) {
         String username = getUsername(headerAccessor);
-        if (username == null) {
+        if (username == null || payload == null || !(payload.get("messageId") instanceof Number messageId)
+                || !(payload.get("emoji") instanceof String emoji)) {
             return;
         }
 
-        if (payload == null || payload.get("messageId") == null) {
+        User user = userRepository.findById(username).orElse(null);
+        if (user == null) {
             return;
         }
 
-        ChatMessage message = chatMessageRepository.findById(payload.get("messageId")).orElse(null);
-        if (message == null) {
-            return;
+        ChatMessageView view = chatReactionService.toggle(messageId.longValue(), user, emoji);
+        if (view != null) {
+            messagingTemplate.convertAndSend(resolveThreadTopic(view.bookId()), view);
         }
-
-        Integer currentVoteCount = message.getUpvotes();
-        int currentVotes = currentVoteCount == null ? 0 : currentVoteCount;
-        message.setUpvotes(currentVotes + 1);
-        ChatMessage saved = chatMessageRepository.save(message);
-        ChatMessageView view = ChatMessageView.fromEntity(saved);
-        messagingTemplate.convertAndSend(resolveThreadTopic(view.bookId()), view);
     }
 
     private String getUsername(SimpMessageHeaderAccessor headerAccessor) {
