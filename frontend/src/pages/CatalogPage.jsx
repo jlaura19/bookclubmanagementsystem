@@ -1,15 +1,17 @@
 import { useEffect, useMemo, useState } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useSearchParams } from 'react-router-dom'
 import api from '../services/api'
 import BookCard from '../components/BookCard'
 import AppHeader from '../components/AppHeader'
+import BookSearchPanel from '../components/BookSearchPanel'
 
 const statusOptions = ['All', 'To Read', 'Reading', 'Completed']
 
 export default function CatalogPage() {
   const [books, setBooks] = useState([])
   const [filter, setFilter] = useState('All')
-  const [query, setQuery] = useState('')
+  const [searchParams] = useSearchParams()
+  const [query, setQuery] = useState(searchParams.get('q') || '')
   const [loading, setLoading] = useState(true)
   const currentUsername = localStorage.getItem('USIU_BOOKCLUB_USERNAME') || localStorage.getItem('USIU_BOOKCLUB_STUDENT_ID')
 
@@ -45,6 +47,11 @@ export default function CatalogPage() {
         title="Catalog"
         subtitle="Browse all shared books, then jump into reviews and discussion."
         primaryAction={{ to: '/books/new', label: 'Add New Book' }}
+      />
+
+      <BookSearchPanel
+        initialTerm={searchParams.get('q') || ''}
+        onAdded={(book) => setBooks((previousBooks) => [book, ...previousBooks])}
       />
 
       <section className="filter-bar">

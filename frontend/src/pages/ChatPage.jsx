@@ -2,8 +2,26 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import { Client } from '@stomp/stompjs'
 import api from '../services/api'
 import AppHeader from '../components/AppHeader'
+import Avatar from '../components/Avatar'
+import { useProfile } from '../services/profile'
+
+const REACTIONS = ['👍', '❤️', '😂', '😮', '😢', '🔥', '👏', '📚']
+const HOLD_MS = 450
+
+function formatTime(value) {
+  if (!value) {
+    return ''
+  }
+  const date = new Date(value)
+  return Number.isNaN(date.getTime()) ? '' : date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+}
 
 export default function ChatPage() {
+  const profile = useProfile()
+  const currentUsername = localStorage.getItem('USIU_BOOKCLUB_USERNAME') || localStorage.getItem('USIU_BOOKCLUB_STUDENT_ID')
+  const [pickerFor, setPickerFor] = useState(null)
+  const holdTimerRef = useRef(null)
+  const feedRef = useRef(null)
   const [books, setBooks] = useState([])
   const [selectedThread, setSelectedThread] = useState('general')
   const [messages, setMessages] = useState([])
@@ -65,6 +83,13 @@ export default function ChatPage() {
   }, [])
 
   useEffect(() => {
+    const feed = feedRef.current
+    if (feed) {
+      feed.scrollTop = feed.scrollHeight
+    }
+  }, [messages.length])
+
+  useEffect(() => {
     loadMessages(selectedBookId)
   }, [selectedBookId])
 
@@ -110,9 +135,7 @@ export default function ChatPage() {
       try {
         const incomingMessage = JSON.parse(frame.body)
         mergeMessage(incomingMessage)
-      } catch {
-        // Ignore malformed websocket payloads.
-      }
+      } catch {}
     })
 
     return () => {
@@ -156,28 +179,38 @@ export default function ChatPage() {
     }
   }
 
-  const handleUpvote = async (messageId) => {
+  const handleReact = async (messageId, emoji) => {
+    setPickerFor(null)
     try {
       if (stompClientRef.current?.connected) {
         stompClientRef.current.publish({
-          destination: '/app/chat.upvote',
-          body: JSON.stringify({ messageId }),
+          destination: '/app/chat.react',
+          body: JSON.stringify({ messageId, emoji }),
         })
         return
       }
 
-      const response = await api.post(`/chat/${messageId}/upvote`)
+      const response = await api.post(`/chat/${messageId}/react`, { emoji })
       mergeMessage(response.data)
     } catch {
-      setError('Could not upvote this message right now.')
+      setError('Could not react to this message right now.')
     }
   }
+
+  const startHold = (messageId) => {
+    clearTimeout(holdTimerRef.current)
+    holdTimerRef.current = setTimeout(() => setPickerFor(messageId), HOLD_MS)
+  }
+
+  const cancelHold = () => clearTimeout(holdTimerRef.current)
+
+  useEffect(() => () => clearTimeout(holdTimerRef.current), [])
 
   return (
     <main className="page-shell">
       <AppHeader
         title="Book Club Chat"
-        subtitle="Live WebSocket chat with general and per-book discussion threads."
+        subtitle="Live chat with general and per-book threads. Press and hold a message to react."
         primaryAction={{ to: '/community', label: 'Open Reviews' }}
       />
 
@@ -199,26 +232,76 @@ export default function ChatPage() {
             </select>
           </div>
           <p className="muted-text">
+            <span className={`status-dot ${isConnected ? 'online' : ''}`} />
             {isConnected ? 'Live connected' : 'Reconnecting...'} • {threadLabel}
           </p>
         </div>
 
-        <div className="chat-feed">
+        <div className="chat-feed" ref={feedRef} onClick={() => setPickerFor(null)}>
           {messages.length === 0 ? (
             <p className="muted-text">No messages yet. Start the chat.</p>
           ) : (
-            messages.map((item) => (
-              <article key={item.id} className="chat-message">
-                <div className="feed-meta">
-                  <strong>{item.username || item.studentId}</strong>
-                  <span>Upvotes: {item.upvotes ?? 0}</span>
-                </div>
-                <p>{item.message}</p>
-                <button type="button" className="secondary-button" onClick={() => handleUpvote(item.id)}>
-                  Upvote
-                </button>
-              </article>
-            ))
+            messages.map((item) => {
+              const author = item.username || item.studentId || '?'
+              const isMine = author === currentUsername
+              return (
+                <article key={item.id} className={`chat-row ${isMine ? 'mine' : ''}`}>
+                  {!isMine && (
+                    <Avatar
+                      className="chat-avatar"
+                      username={author}
+                      displayName={item.displayName}
+                      avatarUrl={item.avatarUrl}
+                      hideImage={profile?.showAvatars === false}
+                      size={32}
+                    />
+                  )}
+                  <div className="chat-bubble-wrap">
+                    {!isMine && <span className="chat-author">{item.displayName || author}</span>}
+                    <div
+                      className="chat-bubble"
+                      onPointerDown={() => startHold(item.id)}
+                      onPointerUp={cancelHold}
+                      onPointerLeave={cancelHold}
+                      onPointerCancel={cancelHold}
+                      onContextMenu={(event) => {
+                        event.preventDefault()
+                        setPickerFor(item.id)
+                      }}
+                    >
+                      <p>{item.message}</p>
+                      <time>{formatTime(item.createdAt)}</time>
+
+                      {pickerFor === item.id && (
+                        <div className="reaction-picker" onClick={(event) => event.stopPropagation()}>
+                          {REACTIONS.map((emoji) => (
+                            <button key={emoji} type="button" onClick={() => handleReact(item.id, emoji)}>
+                              {emoji}
+                            </button>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+
+                    {item.reactions?.length > 0 && (
+                      <div className="reaction-chips">
+                        {item.reactions.map((reaction) => (
+                          <button
+                            key={reaction.emoji}
+                            type="button"
+                            className={reaction.users.includes(currentUsername) ? 'chip active' : 'chip'}
+                            title={reaction.users.join(', ')}
+                            onClick={() => handleReact(item.id, reaction.emoji)}
+                          >
+                            {reaction.emoji} {reaction.users.length}
+                          </button>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                </article>
+              )
+            })
           )}
         </div>
 
@@ -226,7 +309,13 @@ export default function ChatPage() {
           <textarea
             value={message}
             onChange={(event) => setMessage(event.target.value)}
-            rows="3"
+            onKeyDown={(event) => {
+              if (event.key === 'Enter' && !event.shiftKey) {
+                event.preventDefault()
+                handleSend(event)
+              }
+            }}
+            rows="2"
             placeholder="Share your thoughts about a book..."
           />
 

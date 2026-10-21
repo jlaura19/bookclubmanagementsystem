@@ -46,6 +46,7 @@ public class Book {
     @Column(length = 2000)
     private String reviewNotes;
 
+    @Column(length = 1000)
     private String coverImageUrl;
 
     @ManyToOne(fetch = FetchType.LAZY)

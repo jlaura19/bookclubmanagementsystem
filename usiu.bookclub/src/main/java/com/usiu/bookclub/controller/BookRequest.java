@@ -6,6 +6,7 @@ public record BookRequest(
         String genre,
         String readingStatus,
         Integer rating,
-        String reviewNotes
+        String reviewNotes,
+        String coverImageUrl
 ) {
 }

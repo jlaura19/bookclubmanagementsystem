@@ -177,7 +177,17 @@ public class BookController {
                 .readingStatus(request.readingStatus())
                 .rating(request.rating())
                 .reviewNotes(request.reviewNotes())
+                .coverImageUrl(sanitizeExternalCoverUrl(request.coverImageUrl()))
                 .build();
+    }
+
+    private String sanitizeExternalCoverUrl(String url) {
+        if (url == null) {
+            return null;
+        }
+        String trimmed = url.trim();
+        boolean isHttp = trimmed.startsWith("https://") || trimmed.startsWith("http://");
+        return isHttp && trimmed.length() <= 1000 ? trimmed : null;
     }
 
     private void updateBookFromRequest(Book book, BookRequest request) {

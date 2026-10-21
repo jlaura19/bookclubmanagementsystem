@@ -10,9 +10,9 @@ import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.usiu.bookclub.entity.Book;
@@ -21,6 +21,7 @@ import com.usiu.bookclub.entity.User;
 import com.usiu.bookclub.repository.BookRepository;
 import com.usiu.bookclub.repository.ChatMessageRepository;
 import com.usiu.bookclub.repository.UserRepository;
+import com.usiu.bookclub.service.ChatReactionService;
 
 import jakarta.servlet.http.HttpSession;
 
@@ -34,13 +35,16 @@ public class ChatController {
     private final BookRepository bookRepository;
     private final UserRepository userRepository;
     private final SimpMessagingTemplate messagingTemplate;
+    private final ChatReactionService chatReactionService;
 
     public ChatController(ChatMessageRepository chatMessageRepository, BookRepository bookRepository,
-            UserRepository userRepository, SimpMessagingTemplate messagingTemplate) {
+            UserRepository userRepository, SimpMessagingTemplate messagingTemplate,
+            ChatReactionService chatReactionService) {
         this.chatMessageRepository = chatMessageRepository;
         this.bookRepository = bookRepository;
         this.userRepository = userRepository;
         this.messagingTemplate = messagingTemplate;
+        this.chatReactionService = chatReactionService;
     }
 
     @GetMapping
@@ -60,9 +64,7 @@ public class ChatController {
             messageEntities = chatMessageRepository.findTop100ByBookIdOrderByCreatedAtDesc(bookId);
         }
 
-        List<ChatMessageView> messages = messageEntities.stream()
-                .map(ChatMessageView::fromEntity)
-                .toList();
+        List<ChatMessageView> messages = chatReactionService.toViews(messageEntities);
         return ResponseEntity.ok(messages);
     }
 
@@ -99,23 +101,18 @@ public class ChatController {
         return ResponseEntity.ok(view);
     }
 
-    @PostMapping("/{messageId}/upvote")
-    public ResponseEntity<?> upvoteMessage(@PathVariable Long messageId, HttpSession session) {
+    @PostMapping("/{messageId}/react")
+    public ResponseEntity<?> reactToMessage(@PathVariable Long messageId, @RequestBody(required = false) Map<String, String> payload,
+            HttpSession session) {
         User user = getAuthenticatedUser(session);
         if (user == null) {
             return ResponseEntity.status(401).build();
         }
 
-        ChatMessage message = chatMessageRepository.findById(messageId).orElse(null);
-        if (message == null) {
-            return ResponseEntity.notFound().build();
+        ChatMessageView view = chatReactionService.toggle(messageId, user, payload == null ? null : payload.get("emoji"));
+        if (view == null) {
+            return ResponseEntity.badRequest().body(Map.of("message", "Invalid message or reaction."));
         }
-
-        Integer currentVoteCount = message.getUpvotes();
-        int currentVotes = currentVoteCount == null ? 0 : currentVoteCount;
-        message.setUpvotes(currentVotes + 1);
-        ChatMessage saved = chatMessageRepository.save(message);
-        ChatMessageView view = ChatMessageView.fromEntity(saved);
         messagingTemplate.convertAndSend(resolveThreadTopic(view.bookId()), view);
         return ResponseEntity.ok(view);
     }

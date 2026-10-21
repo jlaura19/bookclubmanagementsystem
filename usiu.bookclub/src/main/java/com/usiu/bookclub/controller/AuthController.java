@@ -75,7 +75,6 @@ public class AuthController {
 
     @PostMapping("/login")
     public ResponseEntity<?> login(@RequestBody(required = false) LoginRequest loginRequest, HttpSession session) {
-        // Backward-compatible endpoint: sign in if account exists, otherwise create account.
         String normalizedUsername = normalizeUsername(loginRequest);
         if (normalizedUsername == null) {
             return ResponseEntity.badRequest().body(Map.of("message", "Username is required."));
